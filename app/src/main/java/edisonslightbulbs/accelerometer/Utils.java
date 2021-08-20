@@ -4,7 +4,9 @@ package edisonslightbulbs.accelerometer;
         import android.widget.Toast;
 
         import java.io.File;
+        import java.io.FileOutputStream;
         import java.io.FileWriter;
+        import java.io.IOException;
 
 public class Utils {
 
@@ -12,7 +14,16 @@ public class Utils {
         Toast.makeText(context, msg, Toast.LENGTH_LONG).show();
     }
 
-    public static void writeFileOnInternalStorage(Context context, String dir, String fileName, String str){
+    public static String filePath(Context context, String dir, String file){
+        File contextPath = new File(context.getFilesDir(), dir);
+        if(!contextPath.exists()){
+            contextPath.mkdir();
+        }
+        return contextPath + "/" + file;
+    }
+
+    // non appending
+    public static void writeFile(Context context, String dir, String fileName, String str){
         File path = new File(context.getFilesDir(), dir);
         if(!path.exists()){
             path.mkdir();
@@ -26,6 +37,20 @@ public class Utils {
             writer.close();
 
         } catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    // appending
+    public static void writeFile(String file, String str){
+        try {
+            FileOutputStream outputStream = new FileOutputStream(file, true);
+            FileWriter writer = new FileWriter(outputStream.getFD());
+            writer.write(str);
+            writer.close();
+            outputStream.getFD().sync();
+            outputStream.close();
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
