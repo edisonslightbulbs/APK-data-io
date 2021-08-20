@@ -11,6 +11,11 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.TextView;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 
@@ -23,23 +28,55 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private SensorManager m_sensorManager;
     private Sensor m_accelerometer;
 
+    // file io
+    File m_contextPath;
+    String m_filePath;
+    FileWriter m_writer;
+    FileOutputStream m_outputStream;
+
     // round up to n number of decimal places
     DecimalFormat df = new DecimalFormat("#.######");
 
     private static final String TAG = "MAIN_ACTIVITY";
+    private static final String DIRECTORY = "accelerometer";
+    private static final String FILE_NAME = "data.csv";
+
+    void contextPath(){
+        m_contextPath = new File(this.getFilesDir(), DIRECTORY);
+        if(!m_contextPath.exists()){
+            m_contextPath.mkdir();
+        }
+        m_filePath = m_contextPath + "/" + FILE_NAME;
+    }
+
+    void writeFile(String str){
+        try {
+            m_outputStream = new FileOutputStream(m_filePath, true);
+            m_writer = new FileWriter(m_outputStream.getFD());
+            m_writer.write(str);
+            m_writer.close();
+            m_outputStream.getFD().sync();
+            m_outputStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // create file | ensure it exists
+        contextPath();
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         df.setRoundingMode(RoundingMode.CEILING);
 
         m_sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        if (m_sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) != null){
+        if (m_sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) != null) {
             m_accelerometer = m_sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
             Utils.toast(this, "accelerometer detected");
-        } else{
+        } else {
             Utils.toast(this, "sorry, accelerometer not detected");
             Log.e(TAG, "-- accelerometer sensor not found!");
         }
@@ -67,6 +104,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         m_accelerometerX.setText(xValue);
         m_accelerometerY.setText(yValue);
         m_accelerometerZ.setText(zValue);
+
+        // write to file
+        String data = xValue + ", " + yValue + ", " + zValue;
+        writeFile(data + "\n");
     }
 
     @Override
